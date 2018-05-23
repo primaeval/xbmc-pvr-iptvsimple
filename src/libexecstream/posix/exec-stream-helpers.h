@@ -26,6 +26,8 @@ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <signal.h>
+
 class os_error_t : public exec_stream_t::error_t {
 public:
     os_error_t( std::string const & msg );
@@ -236,4 +238,9 @@ private:
     // workaround for not-quite-conformant libstdc++ (see put())
     std::ostream & m_in;
     bool m_in_bad;
+
+    #ifdef __ANDROID_API__
+    // hack for android system
+    int pthread_cancel(pthread_t thread){ return pthread_kill(thread, SIGUSR1); }
+    #endif
 };

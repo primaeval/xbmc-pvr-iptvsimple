@@ -31,29 +31,34 @@
 #include "PVRSchedulerThread.h"
 #include "p8-platform/util/StdString.h"
 #include "p8-platform/threads/threads.h"
-#include "libexecstream/exec-stream.h"
 
 using namespace ADDON;
 
-class PVRRecorderThread : P8PLATFORM::CThread
+class PVRReaderThread
 {
 public: 
-  PVRRecorderThread(PVRIptvChannel &currChannel, PVRDvrTimer &currTimer);
-  virtual ~PVRRecorderThread(void);
+  PVRReaderThread(int recid, const std::string &filePath, time_t duration);
+  virtual ~PVRReaderThread(void);
 
-  virtual void StopThread(bool bWait = true);
-
-public:
-  virtual void *Process(void);
-
-protected:
-  virtual void CorrectDurationFLVFile(const std::string &videoFile, const double &duration);
+  virtual bool    StartThread();
+  virtual void    StopThread(bool bWait = true);
+  virtual void    OnPlay(); 
+  virtual ssize_t ReadThread(unsigned char *buffer, unsigned int size);
+  virtual int64_t SeekThread(long long position, int whence);
+  virtual int64_t RecordingId();
+  virtual int64_t Position();
+  virtual int64_t Length();
 
 private:
-  FILE*          t_proc;
-  exec_stream_t  e_Stream;
-  double         t_duration;
-  PVRDvrTimer    t_currTimer;
-  PVRIptvChannel t_currChannel;
-  time_t         t_startRecTime;
+  int          x_recid;
+  std::string  x_filePath;
+  void        *x_fileHandle;
+
+  time_t       x_end;
+  time_t       x_nextReopen;
+  bool         x_fastReopen;
+
+  bool         x_playback;
+  uint64_t     x_pos;
+  uint64_t     x_len; 
 };

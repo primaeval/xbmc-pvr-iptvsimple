@@ -1,5 +1,8 @@
 #pragma once
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2015 Radek Kubera
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -19,27 +22,36 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
-#include "p8-platform/util/StringUtils.h"
+
 #include <map>
-#include "p8-platform/threads/threads.h"
-#include "PVRIptvData.h"
 #include <string>
 
+#include "PVRIptvData.h"
+#include "PVRDvrData.h"
+#include "PVRRecorderThread.h"
+#include "p8-platform/util/StdString.h"
+#include "p8-platform/threads/threads.h"
+
 using namespace ADDON;
-using namespace std;
 
 class PVRSchedulerThread : P8PLATFORM::CThread
 {
-    public: 
-    PVRSchedulerThread(void);
-    virtual ~PVRSchedulerThread(void);
-    virtual void StopThread(bool bWait = true);
-    virtual void *Process(void);
-    bool startRecording (const PVR_REC_JOB_ENTRY &RecJobEntry);
-    bool stopRecording (const PVR_REC_JOB_ENTRY &RecJobEntry);
-    private: 
-    bool b_stop;
-    bool isWorking;
-    time_t b_lastCheck;
-    int b_interval;
+public: 
+  PVRSchedulerThread(void);
+  virtual ~PVRSchedulerThread(void);
+
+  virtual void StopThread(bool bWait = true);
+  virtual bool StartRecording(const PVRDvrTimer &myTimer);
+  virtual bool StopRecording(const PVRDvrTimer &myTimer);
+
+public:
+  virtual void *Process(void);
+
+private: 
+  std::string s_jobFile;
+  void*       v_fileHandle;
+  bool        b_stop;
+  bool        b_isWorking;
+  time_t      b_lastCheck;
+  int         b_interval;
 };

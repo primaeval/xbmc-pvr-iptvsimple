@@ -1,4 +1,7 @@
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2015 Radek Kubera
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -7,7 +10,7 @@
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
  *
- *  This Program is distributed in the hope that it will be useful,
+ *  This Program is distributed in the hope that it will be useful, 
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
@@ -19,200 +22,224 @@
  *
  */
 
-#include "p8-platform/util/StringUtils.h"
 #include <vector>
 #include <string>
+
 #include "PVRIptvData.h"
 #include "PVRPlayList.h"
 #include "PVRUtils.h"
+#include "p8-platform/util/StringUtils.h"
 
 using namespace std;
 using namespace ADDON;
 
-extern int g_streamQuality;
-bool PVRPlayList::GetPlaylist (string &strStreamUrl, vector<string> &vstrList)
-{
-    vstrList.clear();
-    //find url for chunks
-    vector<string> vstrUrlElems;
-    vstrUrlElems = StringUtils::Split (strStreamUrl,"/");
-    vstrUrlElems.pop_back();
-    vector <string>::iterator it ( vstrList.begin() );
-    string strUrl; 
-    for (it=vstrUrlElems.begin(); it!=vstrUrlElems.end(); it++)
-    {
-        strUrl.append(*it);
-        strUrl.append("/");
-    }
-    
-    string strContent;
-    void* fileHandle = XBMC->OpenFile(strStreamUrl.c_str(), 0);
-    bool start = true;
-    if (fileHandle)
-    {
-        char buffer[1024];
-        while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-        {
-            strContent.append(buffer, bytesRead);
-            //Check if it is m38u list
-            if (start==true)
-            {
-                vector<string> vstrElems;
-                vstrElems = StringUtils::Split (strContent,"#EXTM3U");
-                if (vstrElems.size()<2)
-                {
-                    //it is not m3u8 list
-                    XBMC->Log(LOG_NOTICE, "Standard m3u8 list not found");
-                    XBMC->CloseFile(fileHandle);
-                    return false; 
-                }
-                start = false;
-            }
-        }
-        XBMC->CloseFile(fileHandle);
-        
-    }
-    else {
-        return false;
-    }
-    
-    vector<string> vstrLines;
-    vstrLines = StringUtils::Split (strContent,"#EXT-X-STREAM-INF:");
-    if (vstrLines.size()>1)
-    {
-        //Found m3u8 list with banwitch
-        XBMC->Log(LOG_NOTICE, "Found standard m3u8 list with bandwitch switcher");
-        bool found = false;
-        
-        int maxBandwith =0;
-        int minBandwith =0;
-        string PlaylistUrl;
-        bool ret = false;
-        
-        bool found_min = false;
-        if (g_streamQuality==0)
-        {
-            XBMC->Log(LOG_NOTICE, "Searching for low quality input stream");
-        }
-        else
-        {
-            XBMC->Log(LOG_NOTICE, "Searching for hi quality input stream");
-        }
-   
-        vector <string>::iterator it ( vstrLines.begin() );
-        for (it=vstrLines.begin(); it!=vstrLines.end(); it++)
-        {
-            if (found==false)
-            {
-                found = true;
-                continue;
-            }
-            vector<string> vstrElems;
-            vstrElems = StringUtils::Split (*it,"\n");
-            
-            //Find list url
-            if (vstrElems[1].size()>0)
-            {
-                string strTrimedElem = StringUtils::Trim(vstrElems[1]);
-                string strStream;
-                if (!StringUtils::StartsWith(strTrimedElem,strUrl))
-                {
-                    strStream = strUrl;
-                    strStream.append(strTrimedElem);
-                }
-                else
-                    strStream = strTrimedElem;
-                //vstrList.push_back(strStream);
-                XBMC->Log(LOG_NOTICE, "Found m3u8 address: %s",strStream.c_str());
-                
-                //Find list params
-                vector <string> vstrParamsElems = StringUtils::Split (vstrElems[0],",");
-                vector <string>::iterator itparam ( vstrParamsElems.begin() );
-                
-                for (itparam=vstrLines.begin(); itparam!=vstrLines.end(); itparam++)
-                {
-                    vector<string> vstrParamElems = StringUtils::Split (*it,"=");
-                    if (StringUtils::Trim(vstrParamElems[0])=="BANDWIDTH")
-                    {
-                        int myBandwith = strtoint(StringUtils::Trim(vstrParamElems[1]));
-                        XBMC->Log(LOG_NOTICE, "Found BANDWIDTH: %d",myBandwith );
+extern int g_iStrmQuality;
 
-                        if (found_min==false)
-                        {
-                            found_min = true;
-                            minBandwith= myBandwith;
-                            PlaylistUrl = strStream;
-                            ret = true;
-                            
-                        }
-                        if (g_streamQuality==0)
-                        {
-                            if (myBandwith<minBandwith)
-                            {
-                                minBandwith= myBandwith;
-                                PlaylistUrl = strStream;
-                                ret = true;
-                            }
-                        }
-                        else
-                        {
-                            if (myBandwith>maxBandwith)
-                            {
-                                maxBandwith= myBandwith;
-                                PlaylistUrl = strStream;
-                                ret = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (ret==true)
+bool PVRPlayList::GetPlaylist(string &strStreamUrl, vector<string> &vstrList)
+{
+  vstrList.clear();
+
+  // find url for chunks
+  vector<string> vstrUrlElems;
+  vstrUrlElems = StringUtils::Split (strStreamUrl, "/");
+  vstrUrlElems.pop_back();
+  vector <string>::iterator it ( vstrList.begin() );
+  string strUrl; 
+
+  for (it=vstrUrlElems.begin(); it != vstrUrlElems.end(); it++)
+  {
+    strUrl.append(*it);
+    strUrl.append("/");
+  }
+    
+  string strContent;
+  void* fileHandle = XBMC->OpenFile(strStreamUrl.c_str(), 0);
+  bool start = true;
+
+  if (fileHandle)
+  {
+    char buffer[1024];
+    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+    {
+      strContent.append(buffer, bytesRead);
+ 
+      // check if it is m38u list
+      if (start == true)
+      {
+        vector<string> vstrElems;
+        vstrElems = StringUtils::Split (strContent, "#EXTM3U");
+
+        if (vstrElems.size()<2)
         {
-            ret = GetPlaylist(PlaylistUrl,vstrList);
-            strStreamUrl = PlaylistUrl;
+          //it is not m3u8 list
+          XBMC->Log(LOG_NOTICE, "Standard m3u8 list not found");
+          XBMC->CloseFile(fileHandle);
+          return false; 
         }
-        return ret;
+       
+        start = false;
+      }
+
+    }
+      
+    XBMC->CloseFile(fileHandle);
+        
+  }
+  else 
+  {
+    return false;
+  }
+    
+  vector<string> vstrLines;
+  vstrLines = StringUtils::Split (strContent, "#EXT-X-STREAM-INF:");
+  
+  if (vstrLines.size()>1)
+  {
+    // found m3u8 list with banwitch
+    XBMC->Log(LOG_NOTICE, "Found standard m3u8 list with bandwitch switcher");
+    bool found = false;
+        
+    int maxBandwith =0;
+    int minBandwith =0;
+    string PlaylistUrl;
+    bool ret = false;
+        
+    bool found_min = false;
+    if (g_iStrmQuality == 0)
+    {
+      XBMC->Log(LOG_NOTICE, "Searching for low quality input stream");
     }
     else
     {
-        //Found standard list
-        vstrLines = StringUtils::Split (strContent,"#EXTINF:");
-        if (vstrLines.size()>1)
-        {
-            //XBMC->Log(LOG_NOTICE, "Found standard m3u8 list");
-            bool found = false;
-            vector <string>::iterator it ( vstrLines.begin() );
-            for (it=vstrLines.begin(); it!=vstrLines.end(); it++)
-            {
-                if (found==false)
-                {
-                    found = true;
-                    continue;
-                }
-                vector<string> vstrElems;
-                vstrElems = StringUtils::Split (*it,"\n");
-                if (vstrElems[1].size()>0)
-                {
-                    string strTrimedElem = StringUtils::Trim(vstrElems[1]);
-                    string strStream;
-                    if (!StringUtils::StartsWith(strTrimedElem,strUrl))
-                    {
-                        strStream = strUrl;
-                        strStream.append(strTrimedElem);
-                    }
-                    else
-                        strStream = strTrimedElem;
-                    vstrList.push_back(strStream);
-                    //XBMC->Log(LOG_NOTICE, "Found chunk: %s",strStream.c_str());
-                }
-                
-            }
-            return true;
-        }
-        else return false;
-        
+      XBMC->Log(LOG_NOTICE, "Searching for hi quality input stream");
     }
-    return true;
+   
+    vector <string>::iterator it ( vstrLines.begin() );
+    for (it=vstrLines.begin(); it != vstrLines.end(); it++)
+    {
+      if (found == false)
+      {
+        found = true;
+        continue;
+      }
+
+      vector<string> vstrElems;
+      vstrElems = StringUtils::Split (*it, "\n");
+            
+      // find list url
+      if (vstrElems[1].size()>0)
+      {
+        string strTrimedElem = StringUtils::Trim(vstrElems[1]);
+        string strStream;
+        
+        if (!StringUtils::StartsWith(strTrimedElem, strUrl))
+        {
+          strStream = strUrl;
+          strStream.append(strTrimedElem);
+        }
+        else
+          strStream = strTrimedElem;
+  
+      //vstrList.push_back(strStream);
+        XBMC->Log(LOG_NOTICE, "Found m3u8 address: %s", strStream.c_str());
+                
+        // find list params
+        vector <string> vstrParamsElems = StringUtils::Split (vstrElems[0], ", ");
+        vector <string>::iterator itparam ( vstrParamsElems.begin() );
+                
+        for (itparam=vstrLines.begin(); itparam != vstrLines.end(); itparam++)
+        {
+          vector<string> vstrParamElems = StringUtils::Split (*it, "=");
+          if (StringUtils::Trim(vstrParamElems[0]) == "BANDWIDTH")
+          {
+            int myBandwith = strtoint(StringUtils::Trim(vstrParamElems[1]));
+            XBMC->Log(LOG_NOTICE, "Found BANDWIDTH: %d", myBandwith );
+
+            if (found_min == false)
+            {
+              found_min = true;
+              minBandwith = myBandwith;
+              PlaylistUrl = strStream;
+              ret = true;                            
+            }
+            if (g_iStrmQuality == 0)
+            {
+              if (myBandwith<minBandwith)
+              {
+                minBandwith = myBandwith;
+                PlaylistUrl = strStream;
+                ret = true;
+                
+              }
+            }
+            else
+            {
+              if (myBandwith>maxBandwith)
+              {
+                maxBandwith = myBandwith;
+                PlaylistUrl = strStream;
+                ret = true;
+              }
+            }
+          }
+        }
+      }
+    }
+        
+    if (ret == true)
+    {
+      ret = GetPlaylist(PlaylistUrl, vstrList);
+      strStreamUrl = PlaylistUrl;
+    }
+ 
+    return ret;
+  }
+  else
+  {
+    // found standard list
+    vstrLines = StringUtils::Split (strContent, "#EXTINF:");
+    
+    if (vstrLines.size()>1)
+    {
+    //XBMC->Log(LOG_NOTICE, "Found standard m3u8 list");
+      bool found = false;
+      vector <string>::iterator it ( vstrLines.begin() );
+      for (it=vstrLines.begin(); it != vstrLines.end(); it++)
+      {
+        if (found == false)
+        {
+          found = true;
+          continue;
+        }
+     
+        vector<string> vstrElems;
+     
+        vstrElems = StringUtils::Split (*it, "\n");
+
+        if (vstrElems[1].size()>0)
+        {
+          string strTrimedElem = StringUtils::Trim(vstrElems[1]);
+          string strStream;
+   
+          if (!StringUtils::StartsWith(strTrimedElem, strUrl))
+          {
+            strStream = strUrl;
+            strStream.append(strTrimedElem);    
+          }
+          else
+            strStream = strTrimedElem;
+          
+          vstrList.push_back(strStream);
+        //XBMC->Log(LOG_NOTICE, "Found chunk: %s", strStream.c_str());
+  
+        }             
+      }
+   
+      return true;
+    }
+    else 
+      return false;  
+  }
+    
+  return true;
 }

@@ -1,4 +1,7 @@
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2015 Radek Kubera
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -18,11 +21,23 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
-#include "PVRIptvData.h"
 
-using namespace std;
+#include <sstream>
+
+#include "PVRIptvData.h"
+#include "PVRDvrData.h"
+
 using namespace ADDON;
 
-extern string inttostr (int i);
-extern int strtoint(string s);
-extern void CloseRecordingThreads(void);
+template <typename T>
+std::string to_string(T value)
+{
+    std::ostringstream os ;
+    os << value ;
+    return os.str() ;
+}
+
+extern void        CloseThreads(void);
+extern std::string BuildSMBPath(std::string netPath);
+extern std::string inttostr(int i);
+extern int         strtoint(std::string s);

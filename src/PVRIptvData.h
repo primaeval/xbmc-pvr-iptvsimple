@@ -1,5 +1,8 @@
 #pragma once
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2013-2015 Anton Fedchin
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -25,62 +28,12 @@
 
 #include <vector>
 #include <string>
+
 #include "p8-platform/util/StdString.h"
 #include "client.h"
 #include "p8-platform/threads/threads.h"
 
-struct PVRIptvEpgEntry
-{
-  int         iBroadcastId;
-  int         iChannelId;
-  int         iGenreType;
-  int         iGenreSubType;
-  time_t      startTime;
-  time_t      endTime;
-  std::string strTitle;
-  std::string strPlotOutline;
-  std::string strPlot;
-  std::string strIconPath;
-  std::string strGenreString;
-};
-
-struct PVRIptvEpgChannel
-{
-  std::string                  strId;
-  std::string                  strName;
-  std::string                  strIcon;
-  std::vector<PVRIptvEpgEntry> epg;
-};
-
-struct PVRIptvChannel
-{
-  bool        bRadio;
-  int         iUniqueId;
-  int         iChannelNumber;
-  int         iEncryptionSystem;
-  int         iTvgShift;
-  std::string strChannelName;
-  std::string strLogoPath;
-  std::string strStreamURL;
-  std::string strTvgId;
-  std::string strTvgName;
-  std::string strTvgLogo;
-};
-
-struct PVRIptvChannelGroup
-{
-  bool              bRadio;
-  int               iGroupId;
-  std::string       strGroupName;
-  std::vector<int>  members;
-};
-
-struct PVRIptvEpgGenre
-{
-  int               iGenreType;
-  int               iGenreSubType;
-  std::string       strGenre;
-};
+using namespace ADDON;
 
 class PVRIptvData : public P8PLATFORM::CThread
 {

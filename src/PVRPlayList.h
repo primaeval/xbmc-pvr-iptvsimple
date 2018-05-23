@@ -1,5 +1,8 @@
 #pragma once
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2015 Radek Kubera
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -28,6 +31,6 @@ using namespace ADDON;
 
 class PVRPlayList
 {
-    public:
-        bool GetPlaylist (string &strStreamUrl, vector<string> &vstrList);
+public:
+  bool GetPlaylist(string &strStreamUrl, vector<string> &vstrList);
 };

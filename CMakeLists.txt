@@ -15,6 +15,8 @@ include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${ZLIB_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/lib)
 
+set(CMAKE_SYSTEM_INCLUDE_PATH /include "${CMAKE_INSTALL_PREFIX}/include")
+
 set(DEPLIBS ${p8-platform_LIBRARIES}
             ${ZLIB_LIBRARIES})
 
@@ -22,12 +24,12 @@ message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
 
 set(IPTV_SOURCES src/client.cpp
                  src/PVRIptvData.cpp
-                 src/PVRRecorder.cpp
+                 src/PVRDvrData.cpp
+                 src/PVRPlayList.cpp
                  src/PVRUtils.cpp
-                 src/PVRRecJob.cpp
                  src/PVRSchedulerThread.cpp
                  src/PVRRecorderThread.cpp
-                 src/PVRPlayList.cpp
+                 src/PVRReaderThread.cpp
                  src/libexecstream/exec-stream.cpp)
 
 build_addon(pvr.iptvsimple IPTV DEPLIBS)

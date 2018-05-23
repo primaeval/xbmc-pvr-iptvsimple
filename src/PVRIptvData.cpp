@@ -1,4 +1,7 @@
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2013-2015 Anton Fedchin
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -27,13 +30,16 @@
 #include <fstream>
 #include <map>
 #include <stdexcept>
+
 #include "zlib.h"
-#include "rapidxml/rapidxml.hpp"
 #include "PVRIptvData.h"
-
-#include "p8-platform/util/StringUtils.h"
+#include "PVRDvrData.h"
+#include "PVRReaderThread.h"
+#include "PVRSchedulerThread.h"
+#include "PVRRecorderThread.h"
 #include "PVRUtils.h"
-
+#include "rapidxml/rapidxml.hpp"
+#include "p8-platform/util/StringUtils.h"
 
 #define M3U_START_MARKER        "#EXTM3U"
 #define M3U_INFO_MARKER         "#EXTINF"
@@ -101,7 +107,6 @@ void *PVRIptvData::Process(void)
 
 PVRIptvData::~PVRIptvData(void)
 {
-  CloseRecordingThreads();
   m_channels.clear();
   m_groups.clear();
   m_epg.clear();
@@ -751,7 +756,7 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &
       else
       {
         tag.iGenreType          = EPG_GENRE_USE_STRING;
-        tag.iGenreSubType       = 0;     /* not supported */
+        tag.iGenreSubType       = 0;   /* not supported */
         tag.strGenreDescription = myTag->strGenreString.c_str();
       }
       tag.iParentalRating     = 0;     /* not supported */
@@ -783,6 +788,17 @@ PVR_ERROR PVRIptvData::GetEPGTagForChannel(EPG_TAG &tag, const PVR_CHANNEL &chan
     if (myChannel->iUniqueId != (int) channel.iUniqueId)
       continue;
 
+    if (iStart > m_iLastStart || iEnd > m_iLastEnd)
+    {
+      // reload EPG for new time interval only
+      LoadEPG(iStart, iEnd);
+      {
+        // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
+        m_iLastStart = iStart;
+        m_iLastEnd = iEnd;
+      }
+    }
+
     PVRIptvEpgChannel *epg;
     if ((epg = FindEpgForChannel(*myChannel)) == NULL || epg->epg.size() == 0)
       return PVR_ERROR_FAILED;
@@ -794,6 +810,9 @@ PVR_ERROR PVRIptvData::GetEPGTagForChannel(EPG_TAG &tag, const PVR_CHANNEL &chan
     {
       if ((myTag->endTime + iShift) < iStart) 
         continue;
+
+      if ((myTag->startTime + iShift) > iEnd)
+        break;
 
       int iGenreType, iGenreSubType;
       
@@ -820,7 +839,7 @@ PVR_ERROR PVRIptvData::GetEPGTagForChannel(EPG_TAG &tag, const PVR_CHANNEL &chan
       else
       {
         tag.iGenreType          = EPG_GENRE_USE_STRING;
-        tag.iGenreSubType       = 0;     /* not supported */
+        tag.iGenreSubType       = 0;   /* not supported */
         tag.strGenreDescription = myTag->strGenreString.c_str();
       }
       tag.iParentalRating     = 0;     /* not supported */
@@ -830,11 +849,6 @@ PVR_ERROR PVRIptvData::GetEPGTagForChannel(EPG_TAG &tag, const PVR_CHANNEL &chan
       tag.iEpisodeNumber      = 0;     /* not supported */
       tag.iEpisodePartNumber  = 0;     /* not supported */
       tag.strEpisodeName      = NULL;  /* not supported */
-
-
-      
-      if ((myTag->startTime + iShift) > iEnd)
-        break;
     }
 
     return PVR_ERROR_NO_ERROR;

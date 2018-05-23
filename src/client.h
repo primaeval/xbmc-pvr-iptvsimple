@@ -1,5 +1,8 @@
 #pragma once
 /*
+ *      Copyright (C) 2018 Gonzalo Vega
+ *      https://github.com/gonzalo-hvega/xbmc-pvr-iptvsimple/
+ *
  *      Copyright (C) 2013-2015 Anton Fedchin
  *      http://github.com/afedchin/xbmc-addon-iptvsimple/
  *
@@ -23,14 +26,15 @@
  *
  */
 
-
-
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
-#include "PVRRECNamespace.h"
+#include "libKODI_guilib.h"
+#include "PVRNamespace.h"
 
 #define M3U_FILE_NAME          "iptv.m3u.cache"
 #define TVG_FILE_NAME          "xmltv.xml.cache"
+#define TIMERS_FILE_NAME       "dvr.timers.cache"
+#define RECORDINGS_FILE_NAME   "dvr.recordings.cache"
 
 /*!
  * @brief PVR macros for string exchange
@@ -43,6 +47,7 @@ extern std::string                   g_strUserPath;
 extern std::string                   g_strClientPath;
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr          *PVR;
+extern CHelper_libKODI_guilib       *GUI;
 
 extern std::string g_strM3UPath;
 extern std::string g_strTvgPath;
@@ -53,6 +58,13 @@ extern bool        g_bTSOverride;
 extern bool        g_bCacheM3U;
 extern bool        g_bCacheEPG;
 extern int         g_iEPGLogos;
+extern std::string g_strRecPath;
+extern std::string g_strFFMPEG;
+extern std::string g_strAVParams;
+extern std::string g_strFFPROBE;
+extern std::string g_strFileExt;
+extern int         g_iStrmTimeout;
+extern int         g_iStrmQuality;
 
 extern std::string PathCombine(const std::string &strPath, const std::string &strFileName);
 extern std::string GetClientFilePath(const std::string &strFileName);

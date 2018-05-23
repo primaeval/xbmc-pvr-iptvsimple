@@ -123,7 +123,7 @@ msgid "Store folder"
 msgstr ""
 
 msgctxt "#30102"
-msgid "Path to rtmpdump binary"
+msgid "Path to ffprobe binary"
 msgstr ""
 
 msgctxt "#30103"
